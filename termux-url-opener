@@ -1,0 +1,107 @@
+#!/bin/bash
+
+# # #    D E F I N A T I O N S   &   C O N S T A N T S    # # #
+# url=$1
+VIDEO_STORAGE="${HOME}/storage/movies"
+MUSIC_STORAGE="${HOME}/storage/music"
+RST='\e[m'
+RED='\e[38;5;196m'
+WHT='\e[38;5;255m'
+BG_RED='\e[48;5;196m'
+BG_BLK='\e[48;5;232m'
+default_theme=('\e[38;5;57m' '\e[48;5;117m' '\e[38;5;51m' '\e[38;5;207m' '\e[38;5;156m')
+theme_set1=('\e[38;5;63m' '\e[48;5;231m' '\e[38;5;207m' '\e[38;5;135m' '\e[38;5;63m')
+theme_set2=(${WHT} '\e[48;5;101m' '\e[38;5;208m' '\e[38;5;136m' '\e[38;5;64m')
+theme_set3=('\e[38;5;167m' '\e[48;5;153m' '\e[38;5;213m' '\e[38;5;141m' '\e[38;5;69m')
+theme_set4=('\e[38;5;59m' '\e[48;5;148m' '\e[38;5;214m' '\e[38;5;142m' '\e[38;5;70m')
+theme_set5=('\e[38;5;63m' '\e[48;5;231m' '\e[38;5;219m' '\e[38;5;147m' '\e[38;5;75m')
+theme_set6=('\e[38;5;63m' '\e[48;5;231m' '\e[38;5;220m' '\e[38;5;148m' '\e[38;5;76m')
+theme_set7=('\e[38;5;98m' '\e[48;5;45m' '\e[38;5;225m' '\e[38;5;153m' '\e[38;5;81m')
+theme_set8=('\e[38;5;58m' '\e[48;5;228m' '\e[38;5;82m' '\e[38;5;154m' '\e[38;5;226m')
+theme_set8=('\e[38;5;14m' '\e[48;5;57m' '\e[38;5;87m' '\e[38;5;159m' '\e[38;5;231m')
+set_theme_set() {
+    ind=0
+    for color in $@
+    do
+        default_theme[$ind]=$color
+        ind=$(($ind + 1))
+    done
+}
+prttl() {
+    echo -e "\e[1m${default_theme[0]}${default_theme[1]} $1 ${RST}"
+}
+pr1() {
+    echo -e "${default_theme[2]}> $1${RST}"
+}
+pr2() {
+    echo -e "${default_theme[3]}> $1${RST}"
+}
+pr3() {
+    echo -e "${default_theme[4]}> $1${RST}"
+}
+prerr1() {
+    echo -e "${RED} $1${RST}"
+}
+prerr2() {
+    echo -e "${BGRED}${WHT} $1${RST}"
+}
+set_theme_set ${theme_set7[*]}
+
+# # #   F U N C S   # # #
+get_rest_of_char() {
+  text=$1
+  searching_str=$2
+  echo ${text#*$searching_str}
+}
+lstrip() {
+    # Usage: lstrip "string" "pattern"
+    printf '%s\n' "${1##$2}"
+}
+rstrip() {
+    # Usage: rstrip "string" "pattern"
+    printf '%s\n' "${1%%$2}"
+}
+ask_yt_format() {
+    raw_formats="$(yt-dlp -Fq $1)"
+    resolutions=$(echo "$raw_formats" | awk -v col=3 'NR>1 {print $col}')
+    sorted_res=$(echo $resolutions | tr " " "\n" | sort -nur)
+    dialog_cmd="termux-dialog radio -v"
+    dialog_args=$(printf "%s,\n" ${sorted_res[@]})
+    # todo: check args len to further
+    dialog_args="audio, ${dialog_args:0:${#dialog_args}-9}"
+    dialog_cmd="${dialog_cmd} \"${dialog_args}\" -t \"Select a download format.\""
+    format=$(eval $dialog_cmd | jq .text)
+    format=$(lstrip $format '"')
+    format=$(rstrip $format '"')
+    if [[ $format != "audio" ]]
+    then
+        format=$(get_rest_of_char $format "x")
+        format=$(rstrip $format '"')
+    fi
+    echo $format
+}
+
+# # # # # # # # # # #
+echo ""
+prttl "# # # # # #    T E R M U X    # # # # # #"
+pr3 "termux-url-opener is running."
+echo ""
+
+if [[ $1 =~ ^.*youtu.*$ ]] || [[ $1 =~ ^.*youtube.*$ ]]
+then
+    pr3 "Youtube url detected. Available formats obtaining..."
+    format=$(ask_yt_format $1)
+    pr3 "${format} selected."
+    if [[ $format == "audio" ]]
+    then
+      yt-dlp --embed-thumbnail --embed-metadata -f 'bestaudio[ext=m4a]' -o "${MUSIC_STORAGE}/%(title)s.%(ext)s" $1
+    else
+      yt-dlp --embed-metadata -f "bestvideo[height<=${format}]+bestaudio/best[height<=${format}]" -o "${VIDEO_STORAGE}/%(title)s.%(ext)s" $1
+    fi
+elif [[ $1 =~ ^.*soundcloud\.com.*$ ]]
+then
+    pr3 "soundcloud url detected"
+else
+    echo $1
+fi
+
