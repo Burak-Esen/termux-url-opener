@@ -147,7 +147,7 @@ then
     pr2 "Installation continue..."
 fi
 
-curl -o "${URL_OPENER_FOLDER}/termux-url-opener" "<< URL WILL BE HERE >>"
+curl -o "${URL_OPENER_FOLDER}/termux-url-opener" "https://raw.githubusercontent.com/Burak-Esen/termux-url-opener/refs/heads/main/termux-url-opener"
 chmod +x "${URL_OPENER_FOLDER}/termux-url-opener"
 
 echo ""

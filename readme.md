@@ -10,6 +10,21 @@ There are many repositories like this but I wanted to create one more and learn 
 - [`Termux:API`](https://f-droid.org/packages/com.termux.api/) plugin will be installed also with `pkg install termux-api` via `setup.sh`. But also need to be installed as an app to your phone.
 - Give required permissions to [`Termux`](https://f-droid.org/packages/com.termux.api/) and [`Termux:API`](https://f-droid.org/packages/com.termux.api/) plugin in app settings of your phone.
 
+### Installation
+
+On termux:
+```bash
+curl "https://raw.githubusercontent.com/Burak-Esen/termux-url-opener/refs/heads/main/setup.sh" | sh
+```
+
+Or clone repo and give execute permission and run
+```bash
+git clone "https://github.com/Burak-Esen/termux-url-opener.git"
+cd termux-url-opener
+chmod +x ./setup.sh
+bash ./setup.sh
+```
+
 ### Usage
 
 Termux should be selected at share options. It will trigger `termux-url-opener` file. `termux-dialog` will lead user via form activities.
