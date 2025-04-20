@@ -14,7 +14,7 @@ There are many repositories like this but I wanted to create one more and learn 
 
 On termux:
 ```bash
-curl "https://raw.githubusercontent.com/Burak-Esen/termux-url-opener/refs/heads/main/setup.sh" | sh
+curl "https://raw.githubusercontent.com/Burak-Esen/termux-url-opener/refs/heads/main/setup.sh" | bash
 ```
 
 Or clone repo and give execute permission and run
