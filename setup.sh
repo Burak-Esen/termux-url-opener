@@ -70,7 +70,7 @@ install_package() {
 install_pip_module() {
     if ! pip list | grep "^${1}" &>/dev/null
     then
-        pr2 "Installing ${1} (youtube downloader)..."
+        pr2 "Installing ${1}..."
         pip install $1
         sleep 2
     else
