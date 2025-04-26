@@ -63,12 +63,17 @@ rstrip() {
 }
 ask_yt_format() {
     raw_formats="$(yt-dlp -Fq $1)"
-    resolutions=$(echo "$raw_formats" | awk -v col=3 'NR>1 {print $col}')
+    resolutions=$(echo "$raw_formats" | awk 'NR>1 { if($8 != "images") { print $3 } }')
     sorted_res=$(echo $resolutions | tr " " "\n" | sort -nur)
     dialog_cmd="termux-dialog radio -v"
     dialog_args=$(printf "%s,\n" ${sorted_res[@]})
     # todo: check args len to further
-    dialog_args="audio, ${dialog_args:0:${#dialog_args}-9}"
+    if [[ ${#dialog_args} < 3 ]]
+    then
+        echo "x"
+        exit 1
+    fi
+    dialog_args="audio, ${dialog_args:0:${#dialog_args}-7}"
     dialog_cmd="${dialog_cmd} \"${dialog_args}\" -t \"Select a download format.\""
     format=$(eval $dialog_cmd | jq .text)
     format=$(lstrip $format '"')
@@ -91,6 +96,10 @@ if [[ $1 =~ ^.*youtu.*$ ]] || [[ $1 =~ ^.*youtube.*$ ]]
 then
     pr3 "Youtube url detected. Available formats obtaining..."
     format=$(ask_yt_format $1)
+    if [[ $format == "x" ]]
+    then
+      exit 0
+    fi
     pr3 "${format} selected."
     if [[ $format == "audio" ]]
     then
