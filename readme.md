@@ -5,7 +5,7 @@
 
 There are many repositories like this but I wanted to create one more and learn something about bash scripting.
 
-### Prerequesites:
+### Prerequisites:
 - [`Termux`](https://f-droid.org/packages/com.termux.api/) don't install it from Google's Playstore. Install from F-Droid or Termux website.
 - [`Termux:API`](https://f-droid.org/packages/com.termux.api/) plugin will be installed also with `pkg install termux-api` via `setup.sh`. But also need to be installed as an app to your phone.
 - Give required permissions to [`Termux`](https://f-droid.org/packages/com.termux.api/) and [`Termux:API`](https://f-droid.org/packages/com.termux.api/) plugin in app settings of your phone.
