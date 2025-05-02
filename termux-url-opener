@@ -31,11 +31,8 @@ set_theme_set() {
     done
 }
 
-shopt -s checkwinsize; (:;:)
+[[ $SHELL =~ ".*/bin/bash" ]] && shopt -s checkwinsize; (:;:)
 prttl() { printf "\e[1m${default_theme[0]}${default_theme[1]}%*s%s%*s\n${RST}" $(( ( $COLUMNS - ${#1} ) / 2 )) ' ' "$1" $(( ( $COLUMNS - ${#1} ) / 2 )) ' ' ; }
-# prttl() {
-#     echo -e "\e[1m${default_theme[0]}${default_theme[1]}$1${RST}"
-# }
 pr1() {
     echo -e "${default_theme[2]}> $1${RST}"
 }
