@@ -31,7 +31,5 @@ Termux should be selected at share options. It will trigger `termux-url-opener` 
 
 **Current download options:**
 - Youtube urls.
-
-**Next features:**
 - soundcloud
 - direct download via `curl`

@@ -99,6 +99,7 @@ apt-get -y update && apt-get -y upgrade
 VIDEO_STORAGE="${HOME}/storage/movies"
 MUSIC_STORAGE="${HOME}/storage/music"
 URL_OPENER_FOLDER="${HOME}/bin"
+TEMP_FOLDER="${HOME}/.url_opener_temp"
 # YTDLP_CONFIG="${HOME}/.yt-dlp"
 
 echo ""
@@ -119,7 +120,7 @@ then
 fi
 
 # sure needed folder exist
-for folder in $VIDEO_STORAGE $MUSIC_STORAGE $URL_OPENER_FOLDER
+for folder in $VIDEO_STORAGE $MUSIC_STORAGE $URL_OPENER_FOLDER $TEMP_FOLDER
 do
     if [[ ! -d $folder ]]
     then

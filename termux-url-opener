@@ -4,6 +4,9 @@
 # url=$1
 VIDEO_STORAGE="${HOME}/storage/movies"
 MUSIC_STORAGE="${HOME}/storage/music"
+DOWNLOAD_FOLDER="${HOME}/storage/downloads"
+TEMP_FOLDER="${HOME}/.url_opener_temp"
+TEMP_FOLDER_AST="${HOME}/.url_opener_temp/*"
 RST='\e[m'
 RED='\e[38;5;196m'
 WHT='\e[38;5;255m'
@@ -27,9 +30,12 @@ set_theme_set() {
         ind=$(($ind + 1))
     done
 }
-prttl() {
-    echo -e "\e[1m${default_theme[0]}${default_theme[1]} $1 ${RST}"
-}
+
+shopt -s checkwinsize; (:;:)
+prttl() { printf "\e[1m${default_theme[0]}${default_theme[1]}%*s%s%*s\n${RST}" $(( ( $COLUMNS - ${#1} ) / 2 )) ' ' "$1" $(( ( $COLUMNS - ${#1} ) / 2 )) ' ' ; }
+# prttl() {
+#     echo -e "\e[1m${default_theme[0]}${default_theme[1]}$1${RST}"
+# }
 pr1() {
     echo -e "${default_theme[2]}> $1${RST}"
 }
@@ -62,16 +68,25 @@ rstrip() {
     printf '%s\n' "${1%%$2}"
 }
 ask_yt_format() {
+    quick_aud=$(termux-dialog radio -v "Download audio format, Retrieve available formats." -t "Quick audio" | jq .text)
+    if [[ $quick_aud == `echo \"Download audio format\"` ]]
+    then
+        echo "audio"
+        return
+    elif [[ $quick_aud == \"\" ]]
+    then
+        echo "x"
+        return
+    fi
     raw_formats="$(yt-dlp -Fq $1)"
     resolutions=$(echo "$raw_formats" | awk 'NR>1 { if($8 != "images") { print $3 } }')
     sorted_res=$(echo $resolutions | tr " " "\n" | sort -nur)
     dialog_cmd="termux-dialog radio -v"
     dialog_args=$(printf "%s,\n" ${sorted_res[@]})
-    # todo: check args len to further
     if [[ ${#dialog_args} < 3 ]]
     then
-        echo "x"
-        exit 1
+        echo "No formats found."
+        return
     fi
     dialog_args="audio, ${dialog_args:0:${#dialog_args}-7}"
     dialog_cmd="${dialog_cmd} \"${dialog_args}\" -t \"Select a download format.\""
@@ -85,32 +100,70 @@ ask_yt_format() {
     fi
     echo $format
 }
+is_valid_link() {
+    # regex='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
+    url_pattern='https?://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]'
+    if [[ $1 =~ $url_pattern ]]
+    then 
+        echo "Link valid"
+    else
+        echo "Link not valid"
+    fi
+}
 
-# # # # # # # # # # #
+url_reducer() {
+    if [[ $1 =~ ^.*youtu.*$ ]] || [[ $1 =~ ^.*youtube.*$ ]]
+    then
+        pr3 "Youtube url detected. Available formats obtaining..."
+        format=$(ask_yt_format $1)
+        if [[ $format == "x" ]]
+        then
+            exit 0
+        elif [[ $format == "No formats found." ]]
+        then
+            prerr1 "No formats found."
+            # Maybe force entering manually here
+            read -i "Press a key to exit..."
+            exit 1
+        fi
+        pr3 "${format} selected."
+        if [[ $format == "audio" ]]
+        then
+            yt-dlp --embed-thumbnail --embed-metadata -f 'bestaudio[ext=m4a]' -o "${MUSIC_STORAGE}/%(title)s.%(ext)s" $1
+        else
+            yt-dlp --embed-metadata -f "bestvideo[height<=${format}]+bestaudio/best[height<=${format}]" -o "${VIDEO_STORAGE}/%(title)s.%(ext)s" $1
+        fi
+    elif [[ $1 =~ ^.*soundcloud\.com.*$ ]]
+    then
+        pr3 "soundcloud url detected. Downloading files(s)..."
+        scdl --path "${TEMP_FOLDER}" -l "${1}"
+        mv $TEMP_FOLDER_AST "${MUSIC_STORAGE}/"
+    else
+        pr3 "Downloading file via curl..."
+        con=$(termux-dialog confirm -i "Download the file from ${1}" -t "Download File" | jq .text)
+        if [[ $con == \"yes\" ]]
+        then
+            curl --create-dirs -O --output-dir $DOWNLOAD_FOLDER "${1}"
+        else
+            exit 0
+        fi
+    fi
+}
+
+# # # # #    M A I N   F L O W    # # # # #
+prttl " "
+prttl "████████╗███████╗██████╗ ███╗   ███╗██╗   ██╗██╗  ██╗"
+prttl "╚══██╔══╝██╔════╝██╔══██╗████╗ ████║██║   ██║╚██╗██╔╝"
+prttl "   ██║   █████╗  ██████╔╝██╔████╔██║██║   ██║ ╚███╔╝ "
+prttl "   ██║   ██╔══╝  ██╔══██╗██║╚██╔╝██║██║   ██║ ██╔██╗ "
+prttl "   ██║   ███████╗██║  ██║██║ ╚═╝ ██║╚██████╔╝██╔╝ ██╗"
+prttl "   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝"
 echo ""
-prttl "# # # # # #    T E R M U X    # # # # # #"
 pr3 "termux-url-opener is running."
 echo ""
 
-if [[ $1 =~ ^.*youtu.*$ ]] || [[ $1 =~ ^.*youtube.*$ ]]
+if [[ $(is_valid_link $1) ]]
 then
-    pr3 "Youtube url detected. Available formats obtaining..."
-    format=$(ask_yt_format $1)
-    if [[ $format == "x" ]]
-    then
-      exit 0
-    fi
-    pr3 "${format} selected."
-    if [[ $format == "audio" ]]
-    then
-      yt-dlp --embed-thumbnail --embed-metadata -f 'bestaudio[ext=m4a]' -o "${MUSIC_STORAGE}/%(title)s.%(ext)s" $1
-    else
-      yt-dlp --embed-metadata -f "bestvideo[height<=${format}]+bestaudio/best[height<=${format}]" -o "${VIDEO_STORAGE}/%(title)s.%(ext)s" $1
-    fi
-elif [[ $1 =~ ^.*soundcloud\.com.*$ ]]
-then
-    pr3 "soundcloud url detected"
-else
-    echo $1
+    url_reducer $1
 fi
 
